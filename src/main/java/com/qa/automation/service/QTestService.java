@@ -3,16 +3,17 @@ package com.qa.automation.service;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qa.automation.config.JiraConfig;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.util.*;
 
 @Service
 public class QTestService {
@@ -71,21 +72,22 @@ public class QTestService {
 
             JsonNode responseNode = objectMapper.readTree(response);
             this.accessToken = responseNode.path("access_token").asText();
-            
+
             if (accessToken == null || accessToken.isEmpty()) {
                 logger.error("No access token received from QTest login response");
                 return false;
             }
-            
+
             // Set token expiry (typically 1 hour, but we'll refresh every 50 minutes)
             this.tokenExpiryTime = System.currentTimeMillis() + (50 * 60 * 1000);
 
             logger.info("Successfully logged in to QTest using username/password");
             return true;
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             logger.error("Login to QTest failed: {} - {}", e.getStatusCode(), e.getResponseBodyAsString());
-            
+
             // Provide specific guidance for common issues
             if (e.getStatusCode().value() == 401) {
                 logger.error("QTest Authentication Failed - Please check:");
@@ -96,7 +98,8 @@ public class QTestService {
                 logger.error("5. Consider using qtest.token instead of username/password");
             }
             return false;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Unexpected error during QTest login: {}", e.getMessage(), e);
             return false;
         }
@@ -111,13 +114,14 @@ public class QTestService {
             logger.debug("Skipping QTest authentication - recent failure detected");
             return false;
         }
-        
+
         if (accessToken == null || System.currentTimeMillis() >= tokenExpiryTime) {
             boolean success = loginToQTest();
             if (!success) {
                 authenticationFailed = true;
                 lastAuthFailTime = System.currentTimeMillis();
-            } else {
+            }
+            else {
                 authenticationFailed = false;
             }
             return success;
@@ -154,11 +158,13 @@ public class QTestService {
 
             return parseTestCaseResponse(response);
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             logger.error("Error fetching QTest test case {}: {} - {}",
                     testCaseId, e.getStatusCode(), e.getResponseBodyAsString());
             return new HashMap<>();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Unexpected error fetching QTest test case {}: {}", testCaseId, e.getMessage(), e);
             return new HashMap<>();
         }
@@ -174,7 +180,7 @@ public class QTestService {
         }
 
         try {
-            String url = String.format("/api/v3/projects/%s/test-cases?size=100", 
+            String url = String.format("/api/v3/projects/%s/test-cases?size=100",
                     jiraConfig.getQtestProjectId());
 
             logger.debug("Searching QTest test cases by title: {}", title);
@@ -193,53 +199,14 @@ public class QTestService {
 
             return filterTestCasesByTitle(response, title);
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             logger.error("Error searching QTest test cases: {} - {}",
                     e.getStatusCode(), e.getResponseBodyAsString());
             return new ArrayList<>();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Unexpected error searching QTest test cases: {}", e.getMessage(), e);
-            return new ArrayList<>();
-        }
-    }
-
-    /**
-     * Search for test cases linked to a specific JIRA issue
-     */
-    public List<Map<String, Object>> searchTestCasesLinkedToJira(String jiraIssueKey) {
-        if (!ensureValidToken()) {
-            logger.error("Cannot search linked test cases - authentication failed");
-            return new ArrayList<>();
-        }
-
-        try {
-            // Search for test cases that have the JIRA issue key in their links or requirements
-            String url = String.format("/api/v3/projects/%s/test-cases?size=500", 
-                    jiraConfig.getQtestProjectId());
-
-            logger.debug("Searching QTest test cases linked to JIRA issue: {}", jiraIssueKey);
-
-            String response = WebClient.builder()
-                    .baseUrl(jiraConfig.getQtestUrl())
-                    .defaultHeader("Authorization", "Bearer " + accessToken)
-                    .defaultHeader("Content-Type", "application/json")
-                    .build()
-                    .get()
-                    .uri(url)
-                    .retrieve()
-                    .bodyToMono(String.class)
-                    .timeout(Duration.ofSeconds(30))
-                    .block();
-
-            return filterTestCasesByJiraLink(response, jiraIssueKey);
-
-        } catch (WebClientResponseException e) {
-            logger.error("Error searching QTest test cases linked to JIRA {}: {} - {}",
-                    jiraIssueKey, e.getStatusCode(), e.getResponseBodyAsString());
-            return new ArrayList<>();
-        } catch (Exception e) {
-            logger.error("Unexpected error searching QTest test cases linked to JIRA {}: {}", 
-                    jiraIssueKey, e.getMessage(), e);
             return new ArrayList<>();
         }
     }
@@ -284,7 +251,8 @@ public class QTestService {
 
             logger.debug("Parsed QTest test case: {}", testCase.get("name"));
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error parsing QTest test case response: {}", e.getMessage(), e);
         }
 
@@ -309,7 +277,7 @@ public class QTestService {
                     Map<String, Object> testCase = new HashMap<>();
                     testCase.put("id", testCaseNode.path("id").asText());
                     testCase.put("name", testCaseName);
-                    
+
                     // Add more details if needed
                     JsonNode assigneeNode = testCaseNode.path("assignee");
                     if (!assigneeNode.isMissingNode()) {
@@ -320,83 +288,15 @@ public class QTestService {
                 }
             }
 
-            logger.info("Found {} matching test cases for title filter: {}", 
+            logger.info("Found {} matching test cases for title filter: {}",
                     matchingTestCases.size(), titleFilter);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error filtering test cases by title: {}", e.getMessage(), e);
         }
 
         return matchingTestCases;
-    }
-
-    /**
-     * Filter test cases by JIRA issue link
-     */
-    private List<Map<String, Object>> filterTestCasesByJiraLink(String response, String jiraIssueKey) {
-        List<Map<String, Object>> linkedTestCases = new ArrayList<>();
-
-        try {
-            JsonNode rootNode = objectMapper.readTree(response);
-            JsonNode itemsNode = rootNode.path("items");
-
-            for (JsonNode testCaseNode : itemsNode) {
-                String testCaseName = testCaseNode.path("name").asText();
-                String testCaseId = testCaseNode.path("id").asText();
-                
-                // Check if test case has links to the JIRA issue
-                boolean isLinked = false;
-                
-                // Check in properties for JIRA links
-                JsonNode propertiesNode = testCaseNode.path("properties");
-                if (propertiesNode.isArray()) {
-                    for (JsonNode property : propertiesNode) {
-                        String fieldName = property.path("field").path("label").asText();
-                        String fieldValue = property.path("field_value").asText();
-                        
-                        // Check various fields that might contain JIRA references
-                        if (fieldName.toLowerCase().contains("jira") || 
-                            fieldName.toLowerCase().contains("defect") ||
-                            fieldName.toLowerCase().contains("requirement")) {
-                            if (fieldValue.contains(jiraIssueKey)) {
-                                isLinked = true;
-                                break;
-                            }
-                        }
-                    }
-                }
-                
-                // Also check in description for JIRA issue references
-                String description = testCaseNode.path("description").asText();
-                if (!isLinked && description.contains(jiraIssueKey)) {
-                    isLinked = true;
-                }
-                
-                if (isLinked) {
-                    Map<String, Object> testCase = new HashMap<>();
-                    testCase.put("id", testCaseId);
-                    testCase.put("name", testCaseName);
-                    testCase.put("description", description);
-                    
-                    // Add assignee if available
-                    JsonNode assigneeNode = testCaseNode.path("assignee");
-                    if (!assigneeNode.isMissingNode() && !assigneeNode.isNull()) {
-                        testCase.put("assignee", assigneeNode.path("username").asText());
-                        testCase.put("assigneeDisplayName", assigneeNode.path("displayName").asText());
-                    }
-                    
-                    linkedTestCases.add(testCase);
-                }
-            }
-
-            logger.info("Found {} test cases linked to JIRA issue: {}", 
-                    linkedTestCases.size(), jiraIssueKey);
-
-        } catch (Exception e) {
-            logger.error("Error filtering test cases by JIRA link: {}", e.getMessage(), e);
-        }
-
-        return linkedTestCases;
     }
 
     /**
@@ -407,7 +307,7 @@ public class QTestService {
             logger.debug("QTest configuration incomplete - cannot test connection");
             return false;
         }
-        
+
         // Reset authentication failure state for connection test
         authenticationFailed = false;
         return loginToQTest();
@@ -420,13 +320,6 @@ public class QTestService {
         authenticationFailed = false;
         lastAuthFailTime = 0;
         accessToken = null;
-    }
-
-    /**
-     * Get current access token (for debugging)
-     */
-    public String getAccessToken() {
-        return accessToken;
     }
 
     /**

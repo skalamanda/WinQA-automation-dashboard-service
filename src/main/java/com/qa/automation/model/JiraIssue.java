@@ -1,10 +1,20 @@
 package com.qa.automation.model;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 @Entity
 @Table(name = "jira_issues")
@@ -60,6 +70,17 @@ public class JiraIssue {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Constructors
+    public JiraIssue() {
+    }
+
+    public JiraIssue(String jiraKey, String summary, String description, String assignee) {
+        this.jiraKey = jiraKey;
+        this.summary = summary;
+        this.description = description;
+        this.assignee = assignee;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -69,16 +90,6 @@ public class JiraIssue {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    public JiraIssue() {}
-
-    public JiraIssue(String jiraKey, String summary, String description, String assignee) {
-        this.jiraKey = jiraKey;
-        this.summary = summary;
-        this.description = description;
-        this.assignee = assignee;
     }
 
     // Getters and Setters

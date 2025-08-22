@@ -1,9 +1,23 @@
 package com.qa.automation.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qa.automation.model.JenkinsResult;
 import com.qa.automation.model.JenkinsTestCase;
 import com.qa.automation.repository.JenkinsResultRepository;
 import com.qa.automation.repository.JenkinsTestCaseRepository;
+import java.io.BufferedReader;
+import java.io.InputStreamReader;
+import java.net.HttpURLConnection;
+import java.net.URL;
+import java.time.Instant;
+import java.time.LocalDateTime;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
@@ -12,40 +26,24 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-
-import java.io.BufferedReader;
-import java.io.InputStreamReader;
-import java.net.HttpURLConnection;
-import java.net.URL;
-import java.time.LocalDateTime;
-import java.time.Instant;
-import java.util.*;
 
 @Service
 public class JenkinsTestNGService {
 
-    @Autowired
-    private JenkinsResultRepository jenkinsResultRepository;
-
-    @Autowired
-    private JenkinsTestCaseRepository jenkinsTestCaseRepository;
-
-    @Autowired
-    private TestNGXMLParserService testNGXMLParserService;
-
-    @Value("${jenkins.url:}")
-    private String jenkinsUrl;
-
-    @Value("${jenkins.username:}")
-    private String jenkinsUsername;
-
-    @Value("${jenkins.token:}")
-    private String jenkinsToken;
-
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    @Autowired
+    private JenkinsResultRepository jenkinsResultRepository;
+    @Autowired
+    private JenkinsTestCaseRepository jenkinsTestCaseRepository;
+    @Autowired
+    private TestNGXMLParserService testNGXMLParserService;
+    @Value("${jenkins.url:}")
+    private String jenkinsUrl;
+    @Value("${jenkins.username:}")
+    private String jenkinsUsername;
+    @Value("${jenkins.token:}")
+    private String jenkinsToken;
 
     /**
      * Generates a comprehensive report similar to your JenkinsTestNGResultReport class
@@ -92,7 +90,8 @@ public class JenkinsTestNGService {
                     "totalSkipped", totalSkipped
             ));
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             report.put("error", "Failed to generate TestNG report: " + e.getMessage());
             e.printStackTrace();
         }
@@ -103,10 +102,12 @@ public class JenkinsTestNGService {
     private int getIntValue(Object value) {
         if (value instanceof Integer) {
             return (Integer) value;
-        } else if (value instanceof String && !"N/A".equals(value)) {
+        }
+        else if (value instanceof String && !"N/A".equals(value)) {
             try {
                 return Integer.parseInt((String) value);
-            } catch (NumberFormatException e) {
+            }
+            catch (NumberFormatException e) {
                 return 0;
             }
         }
@@ -153,7 +154,8 @@ public class JenkinsTestNGService {
 
                 updateDatabaseRecord(jobName, latestBuildNumber, buildStatus,
                         totalCount, passCount, failCount, skipCount, latestBuild);
-            } else {
+            }
+            else {
                 jobReport.put("totalTestCases", "N/A");
                 jobReport.put("passCount", "N/A");
                 jobReport.put("failCount", "N/A");
@@ -161,7 +163,8 @@ public class JenkinsTestNGService {
             }
 
             return jobReport;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error processing job report for " + jobName + ": " + e.getMessage());
             return null;
         }
@@ -198,15 +201,13 @@ public class JenkinsTestNGService {
             System.out.println("Updated database record for " + jobName + " build " + buildNumber +
                     " - ID: " + savedResult.getId());
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error updating database record for " + jobName + ": " + e.getMessage());
             e.printStackTrace();
         }
     }
 
-    /**
-     * Get detailed test cases for a specific job and build - Enhanced version that uses Jenkins Test Report API
-     */
     public Map<String, Object> getDetailedTestCases(String jobName, String buildNumber) {
         Map<String, Object> result = new HashMap<>();
 
@@ -273,7 +274,8 @@ public class JenkinsTestNGService {
             result.put("failedCount", failedCount);
             result.put("skippedCount", skippedCount);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             result.put("error", "Error fetching detailed test cases: " + e.getMessage());
             e.printStackTrace();
         }
@@ -294,7 +296,8 @@ public class JenkinsTestNGService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 return objectMapper.readTree(response.getBody());
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Failed to fetch Jenkins test report: " + e.getMessage());
         }
         return null;
@@ -338,7 +341,8 @@ public class JenkinsTestNGService {
                     }
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error parsing Jenkins test report: " + e.getMessage());
         }
 
@@ -371,7 +375,8 @@ public class JenkinsTestNGService {
                     }
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error parsing console log: " + e.getMessage());
         }
 
@@ -386,9 +391,11 @@ public class JenkinsTestNGService {
             String status = "UNKNOWN";
             if (line.contains("PASSED")) {
                 status = "PASSED";
-            } else if (line.contains("FAILED")) {
+            }
+            else if (line.contains("FAILED")) {
                 status = "FAILED";
-            } else if (line.contains("SKIPPED")) {
+            }
+            else if (line.contains("SKIPPED")) {
                 status = "SKIPPED";
             }
             testCase.put("status", status);
@@ -405,7 +412,8 @@ public class JenkinsTestNGService {
                     if (lastDot > 0) {
                         testCase.put("className", fullTestName.substring(0, lastDot));
                         testCase.put("testName", fullTestName.substring(lastDot + 1));
-                    } else {
+                    }
+                    else {
                         testCase.put("className", "testcases.AccountReceivableIT");
                         testCase.put("testName", fullTestName);
                     }
@@ -413,7 +421,8 @@ public class JenkinsTestNGService {
             }
 
             return testCase;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error parsing test case from log line: " + e.getMessage());
             return null;
         }
@@ -441,7 +450,9 @@ public class JenkinsTestNGService {
     }
 
     private String normalizeTestNGStatus(String status) {
-        if (status == null) return "UNKNOWN";
+        if (status == null) {
+            return "UNKNOWN";
+        }
 
         switch (status.toUpperCase()) {
             case "PASS":
@@ -500,7 +511,8 @@ public class JenkinsTestNGService {
             in.close();
 
             return objectMapper.readTree(response.toString());
-        } else {
+        }
+        else {
             System.err.println("Failed to fetch data from: " + urlString + ". Response code: " + responseCode);
             return null;
         }

@@ -4,12 +4,11 @@ import com.qa.automation.repository.DomainRepository;
 import com.qa.automation.repository.ProjectRepository;
 import com.qa.automation.repository.TestCaseRepository;
 import com.qa.automation.repository.TesterRepository;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.stereotype.Service;
-
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.stereotype.Service;
 
 @Service
 public class DashboardService {

@@ -1,9 +1,8 @@
 package com.qa.automation.dto;
 
-import com.qa.automation.model.JiraTestCase;
 import java.time.LocalDateTime;
-import java.util.List;
 import java.util.ArrayList;
+import java.util.List;
 
 public class JiraIssueDto {
     private Long id;
@@ -24,7 +23,8 @@ public class JiraIssueDto {
     private LocalDateTime updatedAt;
 
     // Constructors
-    public JiraIssueDto() {}
+    public JiraIssueDto() {
+    }
 
     public JiraIssueDto(String jiraKey, String summary, String description, String assignee) {
         this.jiraKey = jiraKey;

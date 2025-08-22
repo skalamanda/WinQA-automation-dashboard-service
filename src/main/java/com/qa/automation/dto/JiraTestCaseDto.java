@@ -23,7 +23,8 @@ public class JiraTestCaseDto {
     private LocalDateTime updatedAt;
 
     // Constructors
-    public JiraTestCaseDto() {}
+    public JiraTestCaseDto() {
+    }
 
     public JiraTestCaseDto(String qtestTitle) {
         this.qtestTitle = qtestTitle;
@@ -184,9 +185,11 @@ public class JiraTestCaseDto {
         if (canBeAutomated != null && cannotBeAutomated != null) {
             if (canBeAutomated && !cannotBeAutomated) {
                 this.automationStatus = "Ready to Automate";
-            } else if (!canBeAutomated && cannotBeAutomated) {
+            }
+            else if (!canBeAutomated && cannotBeAutomated) {
                 this.automationStatus = "NOT_AUTOMATABLE";
-            } else {
+            }
+            else {
                 this.automationStatus = "PENDING";
             }
         }

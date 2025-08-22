@@ -1,7 +1,19 @@
 package com.qa.automation.model;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
 import java.util.Objects;
@@ -80,6 +92,17 @@ public class JenkinsResult {
     @JsonIgnoreProperties("jenkinsResult")
     private List<JenkinsTestCase> testCases;
 
+    // Constructors
+    public JenkinsResult() {
+    }
+
+    public JenkinsResult(String jobName, String buildNumber, String buildStatus) {
+        this.jobName = jobName;
+        this.buildNumber = buildNumber;
+        this.buildStatus = buildStatus;
+        this.jobFrequency = "Unknown";
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -92,16 +115,6 @@ public class JenkinsResult {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    public JenkinsResult() {}
-
-    public JenkinsResult(String jobName, String buildNumber, String buildStatus) {
-        this.jobName = jobName;
-        this.buildNumber = buildNumber;
-        this.buildStatus = buildStatus;
-        this.jobFrequency = "Unknown";
     }
 
     // Getters and Setters
@@ -299,12 +312,10 @@ public class JenkinsResult {
         return project != null ? project.getName() : null;
     }
 
-    // NEW: Helper method to get frequency display
     public String getFrequencyDisplay() {
         return jobFrequency != null ? jobFrequency : "Unknown";
     }
 
-    // NEW: Helper method to determine frequency based on job name patterns
     public void inferJobFrequency() {
         if (jobName == null) {
             this.jobFrequency = "Unknown";
@@ -315,17 +326,23 @@ public class JenkinsResult {
 
         if (lowerJobName.contains("hourly")) {
             this.jobFrequency = "Hourly";
-        } else if (lowerJobName.contains("daily") || lowerJobName.contains("nightly")) {
+        }
+        else if (lowerJobName.contains("daily") || lowerJobName.contains("nightly")) {
             this.jobFrequency = "Daily";
-        } else if (lowerJobName.contains("weekly")) {
+        }
+        else if (lowerJobName.contains("weekly")) {
             this.jobFrequency = "Weekly";
-        } else if (lowerJobName.contains("monthly")) {
+        }
+        else if (lowerJobName.contains("monthly")) {
             this.jobFrequency = "Monthly";
-        } else if (lowerJobName.contains("manual") || lowerJobName.contains("ondemand") || lowerJobName.contains("trigger")) {
+        }
+        else if (lowerJobName.contains("manual") || lowerJobName.contains("ondemand") || lowerJobName.contains("trigger")) {
             this.jobFrequency = "On Demand";
-        } else if (lowerJobName.contains("continuous") || lowerJobName.contains("ci") || lowerJobName.contains("commit")) {
+        }
+        else if (lowerJobName.contains("continuous") || lowerJobName.contains("ci") || lowerJobName.contains("commit")) {
             this.jobFrequency = "Continuous";
-        } else {
+        }
+        else {
             this.jobFrequency = "Unknown";
         }
     }
@@ -348,8 +365,12 @@ public class JenkinsResult {
 
     @Override
     public boolean equals(Object o) {
-        if (this == o) return true;
-        if (!(o instanceof JenkinsResult)) return false;
+        if (this == o) {
+            return true;
+        }
+        if (!(o instanceof JenkinsResult)) {
+            return false;
+        }
         JenkinsResult that = (JenkinsResult) o;
         return Objects.equals(id, that.id) &&
                 Objects.equals(jobName, that.jobName) &&

@@ -1,9 +1,15 @@
 package com.qa.automation.service;
 
+import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qa.automation.model.JenkinsResult;
 import com.qa.automation.model.JenkinsTestCase;
-import com.qa.automation.repository.JenkinsTestCaseRepository;
-import org.springframework.beans.factory.annotation.Autowired;
+import java.io.ByteArrayInputStream;
+import java.util.ArrayList;
+import java.util.Base64;
+import java.util.List;
+import javax.xml.parsers.DocumentBuilder;
+import javax.xml.parsers.DocumentBuilderFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.http.HttpEntity;
 import org.springframework.http.HttpHeaders;
@@ -11,31 +17,21 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import com.fasterxml.jackson.databind.JsonNode;
-import com.fasterxml.jackson.databind.ObjectMapper;
-import org.w3c.dom.*;
-import javax.xml.parsers.DocumentBuilder;
-import javax.xml.parsers.DocumentBuilderFactory;
-import java.io.ByteArrayInputStream;
-import java.util.*;
+import org.w3c.dom.Document;
+import org.w3c.dom.Element;
+import org.w3c.dom.NodeList;
 
 @Service
 public class TestNGXMLParserService {
 
-    @Autowired
-    private JenkinsTestCaseRepository jenkinsTestCaseRepository;
-
-    @Value("${jenkins.url:}")
-    private String jenkinsUrl;
-
-    @Value("${jenkins.username:}")
-    private String jenkinsUsername;
-
-    @Value("${jenkins.token:}")
-    private String jenkinsToken;
-
     private final RestTemplate restTemplate = new RestTemplate();
     private final ObjectMapper objectMapper = new ObjectMapper();
+    @Value("${jenkins.url:}")
+    private String jenkinsUrl;
+    @Value("${jenkins.username:}")
+    private String jenkinsUsername;
+    @Value("${jenkins.token:}")
+    private String jenkinsToken;
 
     /**
      * Extract test cases from TestNG XML files in Jenkins artifacts
@@ -63,14 +59,16 @@ public class TestNGXMLParserService {
                         testCases.addAll(fileCases);
                         System.out.println("Extracted " + fileCases.size() + " test cases from " + xmlFile);
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     System.err.println("Error parsing XML file " + xmlFile + ": " + e.getMessage());
                 }
             }
 
             System.out.println("Total test cases extracted from XML files: " + testCases.size());
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error extracting test cases from XML files: " + e.getMessage());
             e.printStackTrace();
         }
@@ -138,7 +136,8 @@ public class TestNGXMLParserService {
                 }
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error finding TestNG XML files: " + e.getMessage());
         }
 
@@ -153,7 +152,8 @@ public class TestNGXMLParserService {
 
             ResponseEntity<String> response = restTemplate.exchange(url, HttpMethod.HEAD, entity, String.class);
             return response.getStatusCode().is2xxSuccessful();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return false;
         }
     }
@@ -170,7 +170,8 @@ public class TestNGXMLParserService {
             if (response.getStatusCode().is2xxSuccessful()) {
                 return response.getBody();
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error downloading artifact " + artifactPath + ": " + e.getMessage());
         }
 
@@ -194,7 +195,8 @@ public class TestNGXMLParserService {
                 testCases.addAll(parseSurefireXML(jenkinsResult, document));
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error parsing XML content from " + fileName + ": " + e.getMessage());
         }
 
@@ -238,11 +240,14 @@ public class TestNGXMLParserService {
                             String status = method.getAttribute("status");
                             if ("PASS".equals(status)) {
                                 testCase.setStatus("PASSED");
-                            } else if ("FAIL".equals(status)) {
+                            }
+                            else if ("FAIL".equals(status)) {
                                 testCase.setStatus("FAILED");
-                            } else if ("SKIP".equals(status)) {
+                            }
+                            else if ("SKIP".equals(status)) {
                                 testCase.setStatus("SKIPPED");
-                            } else {
+                            }
+                            else {
                                 testCase.setStatus("UNKNOWN");
                             }
 
@@ -252,7 +257,8 @@ public class TestNGXMLParserService {
                                 try {
                                     double duration = Double.parseDouble(durationMs) / 1000.0; // Convert to seconds
                                     testCase.setDuration(duration);
-                                } catch (NumberFormatException e) {
+                                }
+                                catch (NumberFormatException e) {
                                     // Ignore duration parsing errors
                                 }
                             }
@@ -285,7 +291,8 @@ public class TestNGXMLParserService {
                 }
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error parsing TestNG results XML: " + e.getMessage());
         }
 
@@ -316,7 +323,8 @@ public class TestNGXMLParserService {
                     if (time != null && !time.isEmpty()) {
                         try {
                             testCase.setDuration(Double.parseDouble(time));
-                        } catch (NumberFormatException e) {
+                        }
+                        catch (NumberFormatException e) {
                             // Ignore duration parsing errors
                         }
                     }
@@ -331,14 +339,17 @@ public class TestNGXMLParserService {
                         Element failure = (Element) failures.item(0);
                         testCase.setErrorMessage(failure.getAttribute("message"));
                         testCase.setStackTrace(failure.getTextContent());
-                    } else if (errors.getLength() > 0) {
+                    }
+                    else if (errors.getLength() > 0) {
                         testCase.setStatus("FAILED");
                         Element error = (Element) errors.item(0);
                         testCase.setErrorMessage(error.getAttribute("message"));
                         testCase.setStackTrace(error.getTextContent());
-                    } else if (skipped.getLength() > 0) {
+                    }
+                    else if (skipped.getLength() > 0) {
                         testCase.setStatus("SKIPPED");
-                    } else {
+                    }
+                    else {
                         testCase.setStatus("PASSED");
                     }
 
@@ -347,7 +358,8 @@ public class TestNGXMLParserService {
                 }
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error parsing Surefire XML: " + e.getMessage());
         }
 

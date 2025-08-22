@@ -34,9 +34,6 @@ public class DomainService {
         return domainRepository.findById(id).orElse(null);
     }
 
-    public Optional<Domain> findByName(String name) {
-        return domainRepository.findByName(name);
-    }
 
     public Domain updateDomain(Long id, Domain domain) {
         if (domainRepository.existsById(id)) {
@@ -63,7 +60,4 @@ public class DomainService {
         return domainRepository.findByStatus(status);
     }
 
-    public long getDomainsCountByStatus(String status) {
-        return domainRepository.countByStatus(status);
-    }
 }

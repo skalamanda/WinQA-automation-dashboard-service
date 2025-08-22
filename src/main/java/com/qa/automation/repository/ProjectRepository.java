@@ -22,9 +22,6 @@ public interface ProjectRepository extends JpaRepository<Project, Long> {
 
     List<Project> findByStatus(String status);
 
-    @Query("SELECT p FROM Project p WHERE p.domain.id = :domainId ORDER BY p.name")
-    List<Project> findByDomainIdOrderByName(@Param("domainId") Long domainId);
-
     @Query("SELECT COUNT(p) FROM Project p WHERE p.domain.id = :domainId")
     long countByDomainId(@Param("domainId") Long domainId);
 

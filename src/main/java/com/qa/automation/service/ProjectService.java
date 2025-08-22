@@ -1,12 +1,11 @@
 package com.qa.automation.service;
 
-import com.qa.automation.model.Project;
 import com.qa.automation.model.Domain;
+import com.qa.automation.model.Project;
 import com.qa.automation.repository.ProjectRepository;
+import java.util.List;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.stereotype.Service;
-
-import java.util.List;
 
 @Service
 public class ProjectService {
@@ -77,11 +76,4 @@ public class ProjectService {
         return projectRepository.findByStatus(status);
     }
 
-    public long getProjectsCountByDomain(Long domainId) {
-        return projectRepository.countByDomainId(domainId);
-    }
-
-    public long getProjectsCountByDomainAndStatus(Long domainId, String status) {
-        return projectRepository.countByDomainIdAndStatus(domainId, status);
-    }
 }

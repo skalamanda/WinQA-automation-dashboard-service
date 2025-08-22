@@ -15,7 +15,7 @@ public class PermissionController {
     @Autowired
     private PermissionService permissionService;
 
-    @GetMapping("")
+    @GetMapping
     ResponseEntity<List<UserPermission>> getAllPermissions() {
         return ResponseEntity.ok(permissionService.getAllPermissions());
     }

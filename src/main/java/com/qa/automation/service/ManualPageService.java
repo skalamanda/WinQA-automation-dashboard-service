@@ -114,16 +114,6 @@ public class ManualPageService {
         return syncedIssues;
     }
 
-    /**
-     * Original method for backward compatibility
-     */
-    public List<JiraIssueDto> fetchAndSyncSprintIssues(String sprintId) {
-        return fetchAndSyncSprintIssues(sprintId, null, null);
-    }
-
-    /**
-     * Get all saved issues for a sprint
-     */
     public List<JiraIssueDto> getSprintIssues(String sprintId) {
         List<JiraIssue> issues = jiraIssueRepository.findBySprintIdWithLinkedTestCases(sprintId);
         return issues.stream()
@@ -215,13 +205,6 @@ public class ManualPageService {
      */
     public List<Map<String, Object>> getAvailableSprints(String jiraProjectKey, String jiraBoardId) {
         return jiraIntegrationService.fetchSprints(jiraProjectKey, jiraBoardId);
-    }
-
-    /**
-     * Original method for backward compatibility
-     */
-    public List<Map<String, Object>> getAvailableSprints() {
-        return getAvailableSprints(null, null);
     }
 
     /**

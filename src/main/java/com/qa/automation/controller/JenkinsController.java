@@ -1,26 +1,37 @@
 package com.qa.automation.controller;
 
+import com.qa.automation.model.CombinedSaveRequest;
 import com.qa.automation.model.JenkinsResult;
 import com.qa.automation.model.JenkinsTestCase;
-import com.qa.automation.model.Tester;
 import com.qa.automation.model.Project;
+import com.qa.automation.model.Tester;
+import com.qa.automation.model.TesterAssignmentRequest;
 import com.qa.automation.repository.JenkinsResultRepository;
-import com.qa.automation.repository.TesterRepository;
 import com.qa.automation.repository.ProjectRepository;
+import com.qa.automation.repository.TesterRepository;
 import com.qa.automation.service.JenkinsService;
 import com.qa.automation.service.JenkinsTestNGService;
-import com.qa.automation.service.TestNGXMLParserService;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.List;
+import java.util.Map;
+import java.util.Optional;
+import java.util.stream.Collectors;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.*;
-
-import java.util.*;
-import java.util.stream.Collectors;
+import org.springframework.web.bind.annotation.CrossOrigin;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
 
 @RestController
 @RequestMapping("/api/jenkins")
-@CrossOrigin(origins = "*")
 public class JenkinsController {
 
     @Autowired
@@ -28,9 +39,6 @@ public class JenkinsController {
 
     @Autowired
     private JenkinsTestNGService jenkinsTestNGService;
-
-    @Autowired
-    private TestNGXMLParserService testNGXMLParserService;
 
     @Autowired
     private JenkinsResultRepository jenkinsResultRepository;
@@ -49,7 +57,8 @@ public class JenkinsController {
             response.put("connected", connected);
             response.put("message", connected ? "Successfully connected to Jenkins" : "Failed to connect to Jenkins");
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("connected", false);
             response.put("message", "Error testing connection: " + e.getMessage());
@@ -66,11 +75,12 @@ public class JenkinsController {
                 calculateAndSetPassPercentage(result);
             }
             return ResponseEntity.ok(results);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
-    // NEW: Enhanced results endpoint with filtering
+
     @GetMapping("/results/filtered")
     public ResponseEntity<List<JenkinsResult>> getFilteredResults(
             @RequestParam(required = false) Long projectId,
@@ -113,7 +123,8 @@ public class JenkinsController {
             }
 
             return ResponseEntity.ok(filteredResults);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -135,7 +146,8 @@ public class JenkinsController {
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(frequencies);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -152,7 +164,8 @@ public class JenkinsController {
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(projects);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -169,7 +182,8 @@ public class JenkinsController {
                     .collect(Collectors.toList());
 
             return ResponseEntity.ok(testers);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -183,7 +197,8 @@ public class JenkinsController {
                 return ResponseEntity.ok(result);
             }
             return ResponseEntity.notFound().build();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -193,7 +208,8 @@ public class JenkinsController {
         try {
             List<JenkinsTestCase> testCases = jenkinsService.getTestCasesByResultId(resultId);
             return ResponseEntity.ok(testCases);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -203,7 +219,8 @@ public class JenkinsController {
         try {
             Map<String, Object> stats = jenkinsService.getJenkinsStatistics();
             return ResponseEntity.ok(stats);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).build();
         }
     }
@@ -215,7 +232,8 @@ public class JenkinsController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Jenkins jobs synced successfully");
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, String> response = new HashMap<>();
             response.put("error", "Failed to sync Jenkins jobs: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -229,7 +247,8 @@ public class JenkinsController {
             Map<String, String> response = new HashMap<>();
             response.put("message", "Job " + jobName + " synced successfully");
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, String> response = new HashMap<>();
             response.put("error", "Failed to sync job " + jobName + ": " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -242,7 +261,8 @@ public class JenkinsController {
         try {
             Map<String, Object> report = jenkinsTestNGService.generateTestNGReport();
             return ResponseEntity.ok(report);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Failed to generate TestNG report: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -256,7 +276,8 @@ public class JenkinsController {
         try {
             Map<String, Object> testCases = jenkinsTestNGService.getDetailedTestCases(jobName, buildNumber);
             return ResponseEntity.ok(testCases);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Failed to get detailed test cases: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
@@ -276,16 +297,14 @@ public class JenkinsController {
             response.put("message", "Sync completed and report generated successfully");
             response.put("report", report);
             return ResponseEntity.ok(response);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("error", "Failed to sync and generate report: " + e.getMessage());
             return ResponseEntity.status(HttpStatus.INTERNAL_SERVER_ERROR).body(response);
         }
     }
 
-    /**
-     * FIXED: Enhanced notes update endpoint
-     */
     @PutMapping("/results/{id}/notes")
     public ResponseEntity<Map<String, Object>> updateJenkinsResultNotes(
             @PathVariable Long id,
@@ -307,9 +326,11 @@ public class JenkinsController {
             String notes = null;
             if (requestBody.containsKey("bugsIdentified")) {
                 notes = (String) requestBody.get("bugsIdentified");
-            } else if (requestBody.containsKey("failureReasons")) {
+            }
+            else if (requestBody.containsKey("failureReasons")) {
                 notes = (String) requestBody.get("failureReasons");
-            } else if (requestBody.containsKey("notes")) {
+            }
+            else if (requestBody.containsKey("notes")) {
                 notes = (String) requestBody.get("notes");
             }
 
@@ -328,7 +349,8 @@ public class JenkinsController {
 
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error updating notes: " + e.getMessage());
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
@@ -338,9 +360,6 @@ public class JenkinsController {
         }
     }
 
-    /**
-     * FIXED: Endpoint for assigning testers to Jenkins results
-     */
     @PostMapping("/results/{id}/testers")
     public ResponseEntity<Map<String, Object>> assignTestersToJenkinsResult(
             @PathVariable Long id,
@@ -395,7 +414,8 @@ public class JenkinsController {
 
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error assigning testers: " + e.getMessage());
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
@@ -405,9 +425,6 @@ public class JenkinsController {
         }
     }
 
-    /**
-     * FIXED: Main endpoint to save all data (notes, testers, and project) in one request
-     */
     @PostMapping("/results/{id}/save-all")
     public ResponseEntity<Map<String, Object>> saveAllData(
             @PathVariable Long id,
@@ -438,7 +455,8 @@ public class JenkinsController {
                 Optional<Tester> automationTester = testerRepository.findById(request.getAutomationTesterId());
                 if (automationTester.isPresent()) {
                     result.setAutomationTester(automationTester.get());
-                } else {
+                }
+                else {
                     result.setAutomationTester(null);
                 }
             }
@@ -447,7 +465,8 @@ public class JenkinsController {
                 Optional<Tester> manualTester = testerRepository.findById(request.getManualTesterId());
                 if (manualTester.isPresent()) {
                     result.setManualTester(manualTester.get());
-                } else {
+                }
+                else {
                     result.setManualTester(null);
                 }
             }
@@ -457,7 +476,8 @@ public class JenkinsController {
                 Optional<Project> project = projectRepository.findById(request.getProjectId());
                 if (project.isPresent()) {
                     result.setProject(project.get());
-                } else {
+                }
+                else {
                     result.setProject(null);
                 }
             }
@@ -483,7 +503,8 @@ public class JenkinsController {
 
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             System.err.println("Error saving combined data: " + e.getMessage());
             e.printStackTrace();
             Map<String, Object> response = new HashMap<>();
@@ -493,22 +514,17 @@ public class JenkinsController {
         }
     }
 
-    /**
-     * Helper method to calculate and set pass percentage
-     */
     private void calculateAndSetPassPercentage(JenkinsResult result) {
         if (result.getTotalTests() != null && result.getTotalTests() > 0) {
             int passedTests = result.getPassedTests() != null ? result.getPassedTests() : 0;
             double percentage = ((double) passedTests / result.getTotalTests()) * 100;
             result.setPassPercentage((int) Math.round(percentage));
-        } else {
+        }
+        else {
             result.setPassPercentage(0);
         }
     }
 
-    /**
-     * Get notes for a Jenkins result
-     */
     @GetMapping("/results/{id}/notes")
     public ResponseEntity<Map<String, Object>> getJenkinsResultNotes(@PathVariable Long id) {
         try {
@@ -534,7 +550,8 @@ public class JenkinsController {
 
             return ResponseEntity.ok(response);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             Map<String, Object> response = new HashMap<>();
             response.put("success", false);
             response.put("message", "Failed to get notes: " + e.getMessage());
@@ -552,118 +569,4 @@ public class JenkinsController {
         return ResponseEntity.ok(health);
     }
 
-    // Request DTOs
-    public static class TesterAssignmentRequest {
-        private Long automationTesterId;
-        private Long manualTesterId;
-
-        public TesterAssignmentRequest() {}
-
-        public Long getAutomationTesterId() {
-            return automationTesterId;
-        }
-
-        public void setAutomationTesterId(Long automationTesterId) {
-            this.automationTesterId = automationTesterId;
-        }
-
-        public Long getManualTesterId() {
-            return manualTesterId;
-        }
-
-        public void setManualTesterId(Long manualTesterId) {
-            this.manualTesterId = manualTesterId;
-        }
-
-        @Override
-        public String toString() {
-            return "TesterAssignmentRequest{" +
-                    "automationTesterId=" + automationTesterId +
-                    ", manualTesterId=" + manualTesterId +
-                    '}';
-        }
-    }
-
-    public static class CombinedSaveRequest {
-        private String notes;
-        private Long automationTesterId;
-        private Long manualTesterId;
-        private Long projectId; // NEW: Added project support
-
-        public CombinedSaveRequest() {}
-
-        public String getNotes() {
-            return notes;
-        }
-
-        public void setNotes(String notes) {
-            this.notes = notes;
-        }
-
-        public Long getAutomationTesterId() {
-            return automationTesterId;
-        }
-
-        public void setAutomationTesterId(Long automationTesterId) {
-            this.automationTesterId = automationTesterId;
-        }
-
-        public Long getManualTesterId() {
-            return manualTesterId;
-        }
-
-        public void setManualTesterId(Long manualTesterId) {
-            this.manualTesterId = manualTesterId;
-        }
-
-        public Long getProjectId() {
-            return projectId;
-        }
-
-        public void setProjectId(Long projectId) {
-            this.projectId = projectId;
-        }
-
-        @Override
-        public String toString() {
-            return "CombinedSaveRequest{" +
-                    "notes='" + notes + '\'' +
-                    ", automationTesterId=" + automationTesterId +
-                    ", manualTesterId=" + manualTesterId +
-                    ", projectId=" + projectId +
-                    '}';
-        }
-    }
-
-    public static class NotesUpdateRequest {
-        private String notes;
-        private String bugsIdentified;
-        private String failureReasons;
-
-        public NotesUpdateRequest() {}
-
-        public String getNotes() {
-            return notes;
-        }
-
-        public void setNotes(String notes) {
-            this.notes = notes;
-        }
-
-        public String getBugsIdentified() {
-            return bugsIdentified;
-        }
-
-        public void setBugsIdentified(String bugsIdentified) {
-            this.bugsIdentified = bugsIdentified;
-        }
-
-        public String getFailureReasons() {
-            return failureReasons;
-        }
-
-        public void setFailureReasons(String failureReasons) {
-            this.failureReasons = failureReasons;
-        }
-    }
 }

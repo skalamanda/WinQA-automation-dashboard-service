@@ -1,7 +1,17 @@
 package com.qa.automation.model;
 
-import jakarta.persistence.*;
 import com.fasterxml.jackson.annotation.JsonIgnoreProperties;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.JoinColumn;
+import jakarta.persistence.ManyToOne;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 
 @Entity
@@ -66,11 +76,20 @@ public class JiraTestCase {
     @Column(name = "updated_at")
     private LocalDateTime updatedAt;
 
+    // Constructors
+    public JiraTestCase() {
+    }
+
+    public JiraTestCase(String qtestTitle, JiraIssue jiraIssue) {
+        this.qtestTitle = qtestTitle;
+        this.jiraIssue = jiraIssue;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
         updatedAt = LocalDateTime.now();
-        
+
         // Set automation status based on checkbox values
         updateAutomationStatus();
     }
@@ -78,26 +97,18 @@ public class JiraTestCase {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-        
-        // Update automation status based on checkbox values
         updateAutomationStatus();
-    }
-
-    // Constructors
-    public JiraTestCase() {}
-
-    public JiraTestCase(String qtestTitle, JiraIssue jiraIssue) {
-        this.qtestTitle = qtestTitle;
-        this.jiraIssue = jiraIssue;
     }
 
     // Private method to update automation status
     private void updateAutomationStatus() {
         if (canBeAutomated && !cannotBeAutomated) {
             this.automationStatus = "Ready to Automate";
-        } else if (!canBeAutomated && cannotBeAutomated) {
+        }
+        else if (!canBeAutomated && cannotBeAutomated) {
             this.automationStatus = "NOT_AUTOMATABLE";
-        } else {
+        }
+        else {
             this.automationStatus = "PENDING";
         }
     }

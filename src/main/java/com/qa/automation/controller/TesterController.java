@@ -12,7 +12,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.MediaType;
 import org.springframework.http.ResponseEntity;
-import org.springframework.web.bind.annotation.CrossOrigin;
 import org.springframework.web.bind.annotation.DeleteMapping;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.ModelAttribute;
@@ -27,7 +26,6 @@ import org.springframework.web.multipart.MultipartFile;
 
 @RestController
 @RequestMapping("/api/testers")
-@CrossOrigin(origins = "*")
 public class TesterController {
 
     @Autowired
@@ -107,7 +105,8 @@ public class TesterController {
             Path imagePath = Paths.get("uploads", id + ".png");
             try {
                 Files.deleteIfExists(imagePath);
-            } catch (IOException e) {
+            }
+            catch (IOException e) {
                 // Optional: log the failure, but don't fail the delete just for image
                 System.err.println("Failed to delete image for tester ID " + id + ": " + e.getMessage());
             }

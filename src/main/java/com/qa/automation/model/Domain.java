@@ -1,6 +1,16 @@
 package com.qa.automation.model;
 
-import jakarta.persistence.*;
+import jakarta.persistence.CascadeType;
+import jakarta.persistence.Column;
+import jakarta.persistence.Entity;
+import jakarta.persistence.FetchType;
+import jakarta.persistence.GeneratedValue;
+import jakarta.persistence.GenerationType;
+import jakarta.persistence.Id;
+import jakarta.persistence.OneToMany;
+import jakarta.persistence.PrePersist;
+import jakarta.persistence.PreUpdate;
+import jakarta.persistence.Table;
 import java.time.LocalDateTime;
 import java.util.List;
 
@@ -30,6 +40,16 @@ public class Domain {
     @OneToMany(mappedBy = "domain", cascade = CascadeType.ALL, fetch = FetchType.LAZY)
     private List<Project> projects;
 
+    // Constructors
+    public Domain() {
+    }
+
+    public Domain(String name, String description, String status) {
+        this.name = name;
+        this.description = description;
+        this.status = status;
+    }
+
     @PrePersist
     protected void onCreate() {
         createdAt = LocalDateTime.now();
@@ -39,15 +59,6 @@ public class Domain {
     @PreUpdate
     protected void onUpdate() {
         updatedAt = LocalDateTime.now();
-    }
-
-    // Constructors
-    public Domain() {}
-
-    public Domain(String name, String description, String status) {
-        this.name = name;
-        this.description = description;
-        this.status = status;
     }
 
     // Getters and Setters
