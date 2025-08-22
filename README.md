@@ -1,2 +1,2 @@
-# WinQA-automation-dashboard-service
-Back End spring boot for QA automation
+# automation-dashboard-service
+Back End spring boot
