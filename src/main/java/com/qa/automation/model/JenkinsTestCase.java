@@ -39,7 +39,7 @@ public class JenkinsTestCase {
     @Column(name = "stack_trace", columnDefinition = "TEXT")
     private String stackTrace;
 
-    @ManyToOne(fetch = FetchType.LAZY)
+    @ManyToOne(fetch = FetchType.EAGER)
     @JoinColumn(name = "jenkins_result_id", nullable = false)
     @JsonIgnoreProperties("testCases")
     private JenkinsResult jenkinsResult;
