@@ -427,7 +427,6 @@ public class ManualPageService {
      */
     private void updateIssueFromDto(JiraIssue issue, JiraIssueDto issueDto) {
         issue.setSummary(issueDto.getSummary());
-        issue.setDescription(issueDto.getDescription());
         issue.setAssignee(issueDto.getAssignee());
         issue.setAssigneeDisplayName(issueDto.getAssigneeDisplayName());
         issue.setSprintId(issueDto.getSprintId());
@@ -444,7 +443,6 @@ public class ManualPageService {
         JiraIssue issue = new JiraIssue();
         issue.setJiraKey(issueDto.getJiraKey());
         issue.setSummary(issueDto.getSummary());
-        issue.setDescription(issueDto.getDescription());
         issue.setAssignee(issueDto.getAssignee());
         issue.setAssigneeDisplayName(issueDto.getAssigneeDisplayName());
         issue.setSprintId(issueDto.getSprintId());
@@ -599,8 +597,6 @@ public class ManualPageService {
             testCase = new TestCase();
             testCase.setTitle(jiraTestCase.getQtestTitle());
             testCase.setDescription("Test case imported from Jira issue: " + jiraTestCase.getJiraIssue().getJiraKey());
-            testCase.setTestSteps("To be defined during automation implementation");
-            testCase.setExpectedResult("To be defined during automation implementation");
             
             // Use QTest priority if available, otherwise default to Medium
             String priority = (jiraTestCase.getQtestPriority() != null && !jiraTestCase.getQtestPriority().isEmpty()) 
@@ -623,7 +619,6 @@ public class ManualPageService {
         dto.setId(issue.getId());
         dto.setJiraKey(issue.getJiraKey());
         dto.setSummary(issue.getSummary());
-        dto.setDescription(issue.getDescription());
         // Enhanced: Prioritize QA tester names over Jira assignees
         String effectiveAssignee = getEffectiveAssignee(issue);
         String effectiveAssigneeDisplayName = getEffectiveAssigneeDisplayName(issue);

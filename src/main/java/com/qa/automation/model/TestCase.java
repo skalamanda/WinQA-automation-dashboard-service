@@ -28,12 +28,6 @@ public class TestCase {
     @Column(nullable = false, columnDefinition = "TEXT")
     private String description;
 
-    @Column(name = "test_steps", columnDefinition = "TEXT")
-    private String testSteps;
-
-    @Column(name = "expected_result", columnDefinition = "TEXT")
-    private String expectedResult;
-
     @Column(nullable = false)
     private String priority;
 
@@ -45,6 +39,8 @@ public class TestCase {
     @JoinColumn(name = "project_id", nullable = false)
     @JsonIgnoreProperties({"testCases", "domain"})
     private Project project;
+
+    // todo: add domain
 
     // Relationship to Tester
     @ManyToOne(fetch = FetchType.EAGER)
@@ -67,8 +63,6 @@ public class TestCase {
                     String priority, String status, Project project, Tester tester) {
         this.title = title;
         this.description = description;
-        this.testSteps = testSteps;
-        this.expectedResult = expectedResult;
         this.priority = priority;
         this.status = status;
         this.project = project;
@@ -109,22 +103,6 @@ public class TestCase {
 
     public void setDescription(String description) {
         this.description = description;
-    }
-
-    public String getTestSteps() {
-        return testSteps;
-    }
-
-    public void setTestSteps(String testSteps) {
-        this.testSteps = testSteps;
-    }
-
-    public String getExpectedResult() {
-        return expectedResult;
-    }
-
-    public void setExpectedResult(String expectedResult) {
-        this.expectedResult = expectedResult;
     }
 
     public String getPriority() {

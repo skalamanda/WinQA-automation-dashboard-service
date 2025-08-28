@@ -30,9 +30,6 @@ public class JiraIssue {
     @Column(nullable = false)
     private String summary;
 
-    @Column(columnDefinition = "TEXT")
-    private String description;
-
     @Column(name = "assignee")
     private String assignee;
 
@@ -77,7 +74,6 @@ public class JiraIssue {
     public JiraIssue(String jiraKey, String summary, String description, String assignee) {
         this.jiraKey = jiraKey;
         this.summary = summary;
-        this.description = description;
         this.assignee = assignee;
     }
 
@@ -115,14 +111,6 @@ public class JiraIssue {
 
     public void setSummary(String summary) {
         this.summary = summary;
-    }
-
-    public String getDescription() {
-        return description;
-    }
-
-    public void setDescription(String description) {
-        this.description = description;
     }
 
     public String getAssignee() {
