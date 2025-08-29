@@ -5,9 +5,21 @@ import com.fasterxml.jackson.databind.ObjectMapper;
 import com.qa.automation.config.JiraConfig;
 import com.qa.automation.dto.JiraIssueDto;
 import com.qa.automation.dto.JiraTestCaseDto;
-import com.qa.automation.model.JiraIssue;
-import com.qa.automation.model.JiraTestCase;
 import com.qa.automation.repository.JiraIssueRepository;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.Collections;
+import java.util.Date;
+import java.util.HashMap;
+import java.util.HashSet;
+import java.util.LinkedHashMap;
+import java.util.List;
+import java.util.Locale;
+import java.util.Map;
+import java.util.Set;
+import java.util.UUID;
+import java.util.regex.Matcher;
+import java.util.regex.Pattern;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,40 +27,26 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.reactive.function.client.WebClient;
 import org.springframework.web.reactive.function.client.WebClientResponseException;
-import org.springframework.web.util.UriComponentsBuilder;
-import reactor.core.publisher.Mono;
-
-import java.time.Duration;
-import java.util.*;
-import java.util.regex.Matcher;
-import java.util.regex.Pattern;
-import java.util.stream.Collectors;
 
 @Service
 public class JiraIntegrationService {
 
     private static final Logger logger = LoggerFactory.getLogger(JiraIntegrationService.class);
-
-    @Autowired
-    private JiraConfig jiraConfig;
-
-    @Autowired
-    private WebClient jiraWebClient;
-
-    @Autowired
-    private JiraIssueRepository jiraIssueRepository;
-
-    @Autowired
-    private ObjectMapper objectMapper;
-
-    @Autowired
-    private QTestService qTestService;
-
     // Pattern to extract QTest test case links from Jira issues
     private static final Pattern QTEST_PATTERN = Pattern.compile(
             "(?i)(?:qtest|test\\s*case)\\s*:?\\s*([\\w\\s\\-_.,()\\[\\]]+)",
             Pattern.CASE_INSENSITIVE
     );
+    @Autowired
+    private JiraConfig jiraConfig;
+    @Autowired
+    private WebClient jiraWebClient;
+    @Autowired
+    private JiraIssueRepository jiraIssueRepository;
+    @Autowired
+    private ObjectMapper objectMapper;
+    @Autowired
+    private QTestService qTestService;
 
     /**
      * ENHANCED: Fetch all issues from a specific sprint with optional project configuration
@@ -87,11 +85,13 @@ public class JiraIntegrationService {
             logger.debug("Raw Jira API Response for sprint {}: {}", sprintId, response);
             return parseJiraResponse(response, sprintId);
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             logger.error("Error fetching Jira issues from sprint {}: {} - {}",
                     sprintId, e.getStatusCode(), e.getResponseBodyAsString());
             return new ArrayList<>();
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Unexpected error fetching Jira issues from sprint {}: {}", sprintId, e.getMessage(), e);
             return new ArrayList<>();
         }
@@ -143,7 +143,8 @@ public class JiraIntegrationService {
                     // Determine if there are more results
                     if (isLast != null) {
                         hasMore = !isLast;
-                    } else {
+                    }
+                    else {
                         // Fallback: check if we've reached the total
                         hasMore = total != null && allSprints.size() < total;
                     }
@@ -153,7 +154,8 @@ public class JiraIntegrationService {
                         startAt += (returnedMaxResults != null ? returnedMaxResults : maxResults);
                     }
 
-                } else {
+                }
+                else {
                     logger.warn("Received null response from Jira API");
                     hasMore = false;
                 }
@@ -164,7 +166,8 @@ public class JiraIntegrationService {
 
             return allSprints;
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error fetching sprints with pagination: {}", e.getMessage(), e);
             throw e;
         }
@@ -211,7 +214,8 @@ public class JiraIntegrationService {
                 // Search in specific sprint
                 jql = String.format("project = %s AND sprint = %s AND (summary ~ \"%s\" OR description ~ \"%s\" OR comment ~ \"%s\")",
                         projectKey, sprintId, keyword, keyword, keyword);
-            } else {
+            }
+            else {
                 // Search in entire project
                 jql = String.format("project = %s AND (summary ~ \"%s\" OR description ~ \"%s\" OR comment ~ \"%s\")",
                         projectKey, keyword, keyword, keyword);
@@ -234,11 +238,13 @@ public class JiraIntegrationService {
 
             return parseGlobalSearchResponse(response, keyword);
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             logger.error("Error performing global keyword search: {} - {}",
                     e.getStatusCode(), e.getResponseBodyAsString());
             return createEmptySearchResult(keyword);
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Unexpected error performing global keyword search: {}", e.getMessage(), e);
             return createEmptySearchResult(keyword);
         }
@@ -266,11 +272,13 @@ public class JiraIntegrationService {
 
             return countKeywordInComments(response, keyword);
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             logger.warn("Error fetching comments for issue {}: {} - {}",
                     issueKey, e.getStatusCode(), e.getResponseBodyAsString());
             return 0;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.warn("Unexpected error fetching comments for issue {}: {}", issueKey, e.getMessage());
             return 0;
         }
@@ -318,8 +326,10 @@ public class JiraIntegrationService {
 
                 issue.put("occurrences", issueOccurrences);
                 totalOccurrences += issueOccurrences;
-
-                matchingIssues.add(issue);
+                if (issueOccurrences > 0) {
+                    totalCount++;
+                    matchingIssues.add(issue);
+                }
             }
 
             result.put("keyword", keyword);
@@ -331,7 +341,8 @@ public class JiraIntegrationService {
             logger.info("Global search for '{}' found {} matching issues with {} total occurrences",
                     keyword, totalCount, totalOccurrences);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error parsing global search response: {}", e.getMessage(), e);
             return createEmptySearchResult(keyword);
         }
@@ -391,17 +402,20 @@ public class JiraIntegrationService {
                         issues.add(issueDto);
                         logger.debug("Successfully parsed issue: {} with summary: '{}', status: '{}', assignee: '{}'",
                                 issueDto.getJiraKey(), issueDto.getSummary(), issueDto.getStatus(), issueDto.getAssignee());
-                    } else {
+                    }
+                    else {
                         logger.warn("Failed to parse issue node for key: {}", issueNode.path("key").asText());
                     }
-                } catch (Exception e) {
+                }
+                catch (Exception e) {
                     logger.error("Error parsing individual issue {}: {}", issueNode.path("key").asText(), e.getMessage(), e);
                 }
             }
 
             logger.info("Parsed {} issues from Jira response", issues.size());
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error parsing Jira response: {}", e.getMessage(), e);
         }
 
@@ -505,7 +519,8 @@ public class JiraIntegrationService {
 
             return issueDto;
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error parsing issue node: {}", e.getMessage(), e);
             return null;
         }
@@ -534,13 +549,15 @@ public class JiraIntegrationService {
                             return sprintName;
                         }
                     }
-                } else if (sprintNode.isTextual()) {
+                }
+                else if (sprintNode.isTextual()) {
                     // Handle single sprint string
                     String sprintName = extractSprintName(sprintNode.asText());
                     if (sprintName != null && !sprintName.isEmpty()) {
                         return sprintName;
                     }
-                } else if (sprintNode.isObject()) {
+                }
+                else if (sprintNode.isObject()) {
                     // Handle sprint object
                     String sprintName = sprintNode.path("name").asText();
                     if (sprintName != null && !sprintName.isEmpty() && !"null".equals(sprintName)) {
@@ -558,12 +575,16 @@ public class JiraIntegrationService {
      * Normalize qTest IDs from titles and filter to TC- only
      */
     private List<JiraTestCaseDto> normalizeAndFilterTcOnly(List<JiraTestCaseDto> input) {
-        if (input == null || input.isEmpty()) return Collections.emptyList();
+        if (input == null || input.isEmpty()) {
+            return Collections.emptyList();
+        }
         List<JiraTestCaseDto> result = new ArrayList<>();
         for (JiraTestCaseDto dto : input) {
             if (dto.getQtestId() == null || dto.getQtestId().isEmpty()) {
                 String parsed = parseQTestKey(dto.getQtestTitle());
-                if (parsed != null) dto.setQtestId(parsed);
+                if (parsed != null) {
+                    dto.setQtestId(parsed);
+                }
             }
             if (dto.getQtestId() != null && dto.getQtestId().matches("(?i)TC-\\d+")) {
                 result.add(dto);
@@ -611,7 +632,8 @@ public class JiraIntegrationService {
             logger.info("Fetched {} linked test cases from QTest for JIRA issue: {}",
                     testCases.size(), jiraIssueKey);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.warn("Failed to fetch linked test cases from QTest for issue {}: {}",
                     jiraIssueKey, e.getMessage());
         }
@@ -630,7 +652,8 @@ public class JiraIntegrationService {
             if (matcher.find()) {
                 return matcher.group(1);
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.debug("Could not extract sprint name from: {}", sprintString);
         }
         return "Sprint " + jiraConfig.getJiraBoardId(); // Fallback
@@ -675,7 +698,8 @@ public class JiraIntegrationService {
                 }
             }
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error extracting test cases from text: {}", e.getMessage(), e);
         }
 
@@ -706,7 +730,8 @@ public class JiraIntegrationService {
 
             logger.info("Parsed {} sprints from Jira response", sprints.size());
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error parsing sprints response: {}", e.getMessage(), e);
         }
 
@@ -739,7 +764,8 @@ public class JiraIntegrationService {
 
             logger.debug("Found {} occurrences of keyword '{}' in comments", count, keyword);
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Error counting keyword in comments: {}", e.getMessage(), e);
         }
 
@@ -762,7 +788,8 @@ public class JiraIntegrationService {
         if (node.isObject()) {
             try {
                 return extractTextFromADF(node);
-            } catch (Exception e) {
+            }
+            catch (Exception e) {
                 logger.debug("Could not extract text from ADF format: {}", e.getMessage());
                 return node.toString();
             }
@@ -851,16 +878,19 @@ public class JiraIntegrationService {
                     debugInfo.put("availableFields", availableFields);
                 }
 
-            } catch (Exception parseEx) {
+            }
+            catch (Exception parseEx) {
                 debugInfo.put("parseError", parseEx.getMessage());
             }
 
             return debugInfo;
 
-        } catch (WebClientResponseException e) {
+        }
+        catch (WebClientResponseException e) {
             debugInfo.put("error", "HTTP " + e.getStatusCode() + ": " + e.getResponseBodyAsString());
             return debugInfo;
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             debugInfo.put("error", "Unexpected error: " + e.getMessage());
             return debugInfo;
         }
@@ -885,7 +915,8 @@ public class JiraIntegrationService {
             logger.info("Jira connection test successful");
             return true;
 
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.error("Jira connection test failed: {}", e.getMessage());
             return false;
         }
@@ -904,7 +935,9 @@ public class JiraIntegrationService {
 
             // Get Jira issue summary for appending to TC titles
             String jiraSummary = issueNode.path("fields").path("summary").asText("");
-            if (jiraSummary == null) jiraSummary = "";
+            if (jiraSummary == null) {
+                jiraSummary = "";
+            }
             // Truncate summary if too long to keep title manageable
             if (jiraSummary.length() > 100) {
                 jiraSummary = jiraSummary.substring(0, 97) + "...";
@@ -938,7 +971,8 @@ public class JiraIntegrationService {
                     }
                 }
             }
-        } catch (Exception e) {
+        }
+        catch (Exception e) {
             logger.debug("Failed to extract qTest links from changelog: {}", e.getMessage());
         }
         return testCases;
@@ -968,7 +1002,9 @@ public class JiraIntegrationService {
      * Parse qTest key like TC-473 from text
      */
     private String parseQTestKey(String text) {
-        if (text == null) return null;
+        if (text == null) {
+            return null;
+        }
         Matcher m = Pattern.compile("(TC-\\d+)", Pattern.CASE_INSENSITIVE).matcher(text);
         if (m.find()) {
             return m.group(1).toUpperCase(Locale.ROOT);
